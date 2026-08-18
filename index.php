@@ -7,7 +7,7 @@ prato.nome,
 prato.descricao,
 prato.preco,
 prato.categoria,
-usuarios.nome AS usuario
+usuario.nome AS usuario
 
 FROM prato 
 INNER JOIN usuario ON prato.usuario_responsavel = usuario.id";
@@ -52,8 +52,8 @@ $resultado = mysqli_query($conexao, $sql);
                     <td><?php echo $prato['usuario']; ?></td>
 
                     <td>
-                        <a href="editar_prato.php?id=<?php echo $prato['id_prato']; ?>">Editar</a>
-                        <a href="excluir_prato.php?id=<?php echo $prato['id_prato']; ?>">Excluir</a>
+                        <a href="editar_prato.php?id=<?php echo $prato['id']; ?>">Editar</a>
+                        <a href="excluir_prato.php?id=<?php echo $prato['id']; ?>">Excluir</a>
                     </td>
                 </tr>
             <?php } ?>
