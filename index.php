@@ -2,15 +2,16 @@
 include "conexao.php";
 
 $sql = "SELECT 
-pratos.id_prato, 
-pratos.nome, 
-pratos.descricao, 
-pratos.preco, 
-pratos.categoria, 
+prato.id,
+prato.nome,
+prato.descricao,
+prato.preco,
+prato.categoria,
 usuarios.nome AS usuario
 
-FROM pratos INNER JOIN usuarios ON pratos.id_usuario = usuarios.id_usuario"; 
-
+FROM prato 
+INNER JOIN usuario ON prato.usuario_responsavel = usuario.id";
+ 
 $resultado = mysqli_query($conexao, $sql);
 ?>
 <!DOCTYPE html>
