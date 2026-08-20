@@ -1,23 +1,18 @@
 <?php
 include "conexao.php";
 
-$usuarios = $conexao->query("SELECT id, nome FROM usuarios ORDER BY nome");
+$sql = "SELECT pratos.id, pratos.nome, pratos.descricao, pratos.preco, pratos.categoria, usuarios.nome AS nome_usuario
+        FROM pratos
+        INNER JOIN usuarios ON pratos.usuario_id = usuarios.id
+        ORDER BY pratos.id DESC";
 
-$pratos = null;
-$usuario_selecionado = isset($_GET['usuario_id']) ? $_GET['usuario_id'] : "";
-
-if ($usuario_selecionado != "") {
-    $sql = $conexao->prepare("SELECT * FROM pratos WHERE usuario_id = ? ORDER BY nome");
-    $sql->bind_param("i", $usuario_selecionado);
-    $sql->execute();
-    $pratos = $sql->get_result();
-}
+$resultado = $conexao->query($sql);
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Pratos por Usuário</title>
+    <title>Listar Pratos</title>
     <link rel="stylesheet" href="css/estilo.css">
 </head>
 <body>
@@ -33,41 +28,38 @@ if ($usuario_selecionado != "") {
 </header>
 
 <div class="container">
-    <h1>Pratos Cadastrados por Usuário</h1>
+    <h1>Pratos Cadastrados</h1>
 
-    <form method="GET" action="listar_prato_usuario.php">
-        <label for="usuario_id">Selecione o usuário</label>
-        <select name="usuario_id" id="usuario_id" onchange="this.form.submit()">
-            <option value="">-- Selecione --</option>
-            <?php while ($usuario = $usuarios->fetch_assoc()): ?>
-                <option value="<?php echo $usuario['id']; ?>" <?php if ($usuario['id'] == $usuario_selecionado) echo "selected"; ?>>
-                    <?php echo htmlspecialchars($usuario['nome']); ?>
-                </option>
-            <?php endwhile; ?>
-        </select>
-    </form>
+    <?php if (isset($_GET['msg'])): ?>
+        <div class="mensagem-sucesso"><?php echo htmlspecialchars($_GET['msg']); ?></div>
+    <?php endif; ?>
 
-    <?php if ($pratos !== null): ?>
-        <?php if ($pratos->num_rows == 0): ?>
-            <p style="margin-top:15px;">Esse usuário ainda não cadastrou nenhum prato.</p>
-        <?php else: ?>
-        <table>
-            <tr>
-                <th>Nome</th>
-                <th>Descrição</th>
-                <th>Preço</th>
-                <th>Categoria</th>
-            </tr>
-            <?php while ($prato = $pratos->fetch_assoc()): ?>
-            <tr>
-                <td><?php echo htmlspecialchars($prato['nome']); ?></td>
-                <td><?php echo htmlspecialchars($prato['descricao']); ?></td>
-                <td>R$ <?php echo number_format($prato['preco'], 2, ',', '.'); ?></td>
-                <td><?php echo htmlspecialchars($prato['categoria']); ?></td>
-            </tr>
-            <?php endwhile; ?>
-        </table>
-        <?php endif; ?>
+    <?php if ($resultado->num_rows == 0): ?>
+        <p>Nenhum prato cadastrado ainda.</p>
+    <?php else: ?>
+    <table>
+        <tr>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Preço</th>
+            <th>Categoria</th>
+            <th>Cadastrado por</th>
+            <th>Ações</th>
+        </tr>
+        <?php while ($prato = $resultado->fetch_assoc()): ?>
+        <tr>
+            <td><?php echo htmlspecialchars($prato['nome']); ?></td>
+            <td><?php echo htmlspecialchars($prato['descricao']); ?></td>
+            <td>R$ <?php echo number_format($prato['preco'], 2, ',', '.'); ?></td>
+            <td><?php echo htmlspecialchars($prato['categoria']); ?></td>
+            <td><?php echo htmlspecialchars($prato['nome_usuario']); ?></td>
+            <td class="acoes">
+                <a href="editar_prato.php?id=<?php echo $prato['id']; ?>">Editar</a>
+                <a href="excluir_prato.php?id=<?php echo $prato['id']; ?>" onclick="return confirm('Tem certeza que deseja excluir este prato?')">Excluir</a>
+            </td>
+        </tr>
+        <?php endwhile; ?>
+    </table>
     <?php endif; ?>
 </div>
 
