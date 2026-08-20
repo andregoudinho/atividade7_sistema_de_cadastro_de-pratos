@@ -1,104 +1,156 @@
 <?php
-include "conexao.php";
+include "../conexao.php";
 
-$mensagem = "";
-
-$id = isset($_GET['id']) ? $_GET['id'] : (isset($_POST['id']) ? $_POST['id'] : null);
-
-if ($id === null) {
-    header("Location: listar_pratos.php");
-    exit;
-}
-
-$usuarios = $conexao->query("SELECT id, nome FROM usuarios ORDER BY nome");
+$id = $_GET['id'];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $nome = trim($_POST["nome"]);
-    $descricao = trim($_POST["descricao"]);
-    $preco = trim($_POST["preco"]);
-    $categoria = trim($_POST["categoria"]);
-    $usuario_id = $_POST["usuario_id"];
+    $nome = $_POST["nome"];
+    $descricao = $_POST["descricao"];
+    $preco = $_POST["preco"];
+    $categoria = $_POST["categoria"];
+    $usuario = $_POST["usuario_responsavel"];
 
-    if ($nome == "" || $descricao == "" || $preco == "" || $categoria == "" || $usuario_id == "") {
-        $mensagem = "erro:Preencha todos os campos antes de salvar.";
-    } elseif (!is_numeric($preco)) {
-        $mensagem = "erro:O preço precisa ser um número.";
-    } else {
-        $sql = $conexao->prepare("UPDATE pratos SET nome = ?, descricao = ?, preco = ?, categoria = ?, usuario_id = ? WHERE id = ?");
-        $sql->bind_param("ssdsii", $nome, $descricao, $preco, $categoria, $usuario_id, $id);
-        $sql->execute();
-        $sql->close();
+    $sql = "UPDATE prato SET
+            nome='$nome',
+            descricao='$descricao',
+            preco='$preco',
+            categoria='$categoria',
+            usuario_responsavel='$usuario'
+            WHERE id='$id'";
 
-        header("Location: listar_pratos.php?msg=Prato atualizado com sucesso!");
-        exit;
-    }
-}
+    mysqli_query($conexao, $sql);
 
-$sql = $conexao->prepare("SELECT * FROM pratos WHERE id = ?");
-$sql->bind_param("i", $id);
-$sql->execute();
-$prato = $sql->get_result()->fetch_assoc();
-$sql->close();
-
-if (!$prato) {
     header("Location: listar_pratos.php");
     exit;
 }
+
+$sql = "SELECT * FROM prato WHERE id='$id'";
+$resultado = mysqli_query($conexao, $sql);
+$prato = mysqli_fetch_assoc($resultado);
+
+$usuarios = mysqli_query($conexao, "SELECT * FROM usuario ORDER BY nome");
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>Editar Prato</title>
-    <link rel="stylesheet" href="css/estilo.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body>
 
-<header>
-    <nav>
-        <a href="index.php">Início</a>
-        <a href="cadastrar_usuario.php">Cadastrar Usuário</a>
-        <a href="cadastrar_prato.php">Cadastrar Prato</a>
-        <a href="listar_pratos.php">Listar Pratos</a>
-        <a href="listar_prato_usuario.php">Pratos por Usuário</a>
-    </nav>
-</header>
+<div class="container mt-5">
 
-<div class="container">
-    <h1>Editar Prato</h1>
+    <h1 class="mb-4">Sistema do Restaurante</h1>
 
-    <?php if ($mensagem != "") {
-        $partes = explode(":", $mensagem, 2);
-        echo "<div class='mensagem-erro'>" . $partes[1] . "</div>";
-    } ?>
+    <div class="mb-4">
 
-    <form method="POST" action="editar_prato.php">
-        <input type="hidden" name="id" value="<?php echo $prato['id']; ?>">
+        <a href="cadastrar_usuario.php" class="btn btn-success">
+            Cadastrar Usuário
+        </a>
 
-        <label for="nome">Nome do prato</label>
-        <input type="text" name="nome" id="nome" value="<?php echo htmlspecialchars($prato['nome']); ?>">
+        <a href="cadastrar_prato.php" class="btn btn-success">
+            Cadastrar Prato
+        </a>
 
-        <label for="descricao">Descrição</label>
-        <textarea name="descricao" id="descricao" rows="3"><?php echo htmlspecialchars($prato['descricao']); ?></textarea>
+        <a href="listar_pratos.php" class="btn btn-success">
+            Listar Pratos
+        </a>
 
-        <label for="preco">Preço</label>
-        <input type="text" name="preco" id="preco" value="<?php echo $prato['preco']; ?>">
+        <a href="pratos_por_usuario.php" class="btn btn-success">
+            Pratos por Usuário
+        </a>
 
-        <label for="categoria">Categoria</label>
-        <input type="text" name="categoria" id="categoria" value="<?php echo htmlspecialchars($prato['categoria']); ?>">
+    </div>
 
-        <label for="usuario_id">Cadastrado por</label>
-        <select name="usuario_id" id="usuario_id">
-            <?php while ($usuario = $usuarios->fetch_assoc()): ?>
-                <option value="<?php echo $usuario['id']; ?>" <?php if ($usuario['id'] == $prato['usuario_id']) echo "selected"; ?>>
-                    <?php echo htmlspecialchars($usuario['nome']); ?>
-                </option>
-            <?php endwhile; ?>
-        </select>
+    <h2 class="mb-4">Editar Prato</h2>
 
-        <button type="submit">Salvar Alterações</button>
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Nome</label>
+
+            <input
+                type="text"
+                name="nome"
+                class="form-control"
+                value="<?php echo $prato['nome']; ?>"
+                required
+            >
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Descrição</label>
+
+            <textarea
+                name="descricao"
+                class="form-control"
+                required
+            ><?php echo $prato['descricao']; ?></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Preço</label>
+
+            <input
+                type="text"
+                name="preco"
+                class="form-control"
+                value="<?php echo $prato['preco']; ?>"
+                required
+            >
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Categoria</label>
+
+            <input
+                type="text"
+                name="categoria"
+                class="form-control"
+                value="<?php echo $prato['categoria']; ?>"
+                required
+            >
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Usuário</label>
+
+            <select name="usuario_responsavel" class="form-select" required>
+
+                <?php while ($usuario = mysqli_fetch_assoc($usuarios)) { ?>
+
+                    <option
+                        value="<?php echo $usuario['id']; ?>"
+                        <?php
+                        if ($usuario['id'] == $prato['usuario_responsavel']) {
+                            echo "selected";
+                        }
+                        ?>
+                    >
+                        <?php echo $usuario['nome']; ?>
+                    </option>
+
+                <?php } ?>
+
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Salvar
+        </button>
+
+        <a href="listar_pratos.php" class="btn btn-secondary">
+            Voltar
+        </a>
+
     </form>
+
 </div>
 
 </body>
